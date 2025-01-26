@@ -1,0 +1,78 @@
+https://restcountries-v1.p.rapidapi.com/currency/NOK
+X-RapidAPI-Key: 62423a003fmsh971033e0461b3bdp134f05jsnce6ca1ea96d7
+X-RapidAPI-Host: restcountries-v1.p.rapidapi.com
+Content-Type: application/json
+
+
+### ddd
+GET https://restcountries-v1.p.rapidapi.com/all HTTP/1.1
+X-RapidAPI-Key: 62423a003fmsh971033e0461b3bdp134f05jsnce6ca1ea96d7
+X-RapidAPI-Host: restcountries-v1.p.rapidapi.com
+Host: restcountries-v1.p.rapidapi.com
+
+###
+POST https://std.p.rapidapi.com/v1/phone-std/india HTTP/1.1
+X-RapidAPI-Key: 62423a003fmsh971033e0461b3bdp134f05jsnce6ca1ea96d7
+X-Rapidapi-Host: std.p.rapidapi.com
+Content-Type: application/json
+
+{"search":"Thane"}
+
+
+###
+GET https://plants2.p.rapidapi.com/api/plants?CN=acacia HTTP/1.1
+X-RapidAPI-Key: 62423a003fmsh971033e0461b3bdp134f05jsnce6ca1ea96d7
+X-Rapidapi-Host: plants2.p.rapidapi.com
+Authorization: GKZOHNZj0xP65kk0BAE2Tl9LGagm0pfD3DFNxAEEZcMQBhRZVDco8vbNJdnwwCo0
+Host: plants2.p.rapidapi.com
+
+
+###
+GET https://india-pincode-api.p.rapidapi.com/v1/in/places/states/Telangana HTTP/1.1
+X-RapidAPI-Key: 62423a003fmsh971033e0461b3bdp134f05jsnce6ca1ea96d7
+X-Rapidapi-Host: india-pincode-api.p.rapidapi.com
+Host: india-pincode-api.p.rapidapi.com
+
+###
+GET https://india-pincode-api.p.rapidapi.com/v1/in/places/states/Telangana/Nalgonda HTTP/1.1
+X-RapidAPI-Key: 62423a003fmsh971033e0461b3bdp134f05jsnce6ca1ea96d7
+X-Rapidapi-Host: india-pincode-api.p.rapidapi.com
+Host: india-pincode-api.p.rapidapi.com
+
+###
+GET https://pincode.apitier.com/v1/in/places/states/Telangana/Adilabad HTTP/1.1
+X-RapidAPI-Key: 62423a003fmsh971033e0461b3bdp134f05jsnce6ca1ea96d7
+
+
+###
+POST https://google-map-places-new-v2.p.rapidapi.com/v1/places:autocomplete HTTP/1.1
+X-Rapidapi-Key: 62423a003fmsh971033e0461b3bdp134f05jsnce6ca1ea96d7
+X-Rapidapi-Host: google-map-places-new-v2.p.rapidapi.com
+Content-Type: application/json
+X-Goog-Fieldmask: *
+Host: google-map-places-new-v2.p.rapidapi.com
+Content-Length: 295
+
+{"input":"Restaurant","locationBias":{"circle":{"center":{"latitude":40,"longitude":-110},"radius":10000}},"includedPrimaryTypes":[],"includedRegionCodes":[],"languageCode":"","regionCode":"","origin":{"latitude":0,"longitude":0},"inputOffset":0,"includeQueryPredictions":true,"sessionToken":""}
+
+
+###
+GET https://location74.p.rapidapi.com/v1/states?page=1&name=maharashtra HTTP/1.1
+X-Rapidapi-Key: 62423a003fmsh971033e0461b3bdp134f05jsnce6ca1ea96d7
+X-Rapidapi-Host: location74.p.rapidapi.com
+
+###
+GET https://location74.p.rapidapi.com/v1/cities?page=1&stateName=maharashtra HTTP/1.1
+X-Rapidapi-Key: 62423a003fmsh971033e0461b3bdp134f05jsnce6ca1ea96d7
+X-Rapidapi-Host: location74.p.rapidapi.com
+
+
+###
+GET https://india-pincode-details-with-latitude-and-longitude.p.rapidapi.com/districts?page=1&state=maharashtra&limit=20 HTTP/1.1
+X-Rapidapi-Key: 62423a003fmsh971033e0461b3bdp134f05jsnce6ca1ea96d7
+X-Rapidapi-Host: india-pincode-details-with-latitude-and-longitude.p.rapidapi.com
+
+###
+GET https://india-pincode-details-with-latitude-and-longitude.p.rapidapi.com/pincode-details?pincode=302019 HTTP/1.1
+X-Rapidapi-Key: 62423a003fmsh971033e0461b3bdp134f05jsnce6ca1ea96d7
+X-Rapidapi-Host: india-pincode-details-with-latitude-and-longitude.p.rapidapi.com

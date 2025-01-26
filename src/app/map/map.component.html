@@ -1,0 +1,27 @@
+<div class="flex flex-row h-svh">
+  <div class="basis-2/3 relative">
+    <div class="map-container">
+      <div class="map-frame">
+        <div id="map"></div>
+      </div>
+    </div>
+  </div>
+  <div class="basis-1/3 h-svh">
+    <div class="h-svh">
+      <mat-form-field>
+        <mat-label>adasd</mat-label>
+        <mat-select (selectionChange)="changeMap($event)">
+          <mat-option [value]="'World'">World</mat-option>
+          <mat-option [value]="'India'">India</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <div>
+        <ul>
+          @for(c of stateNames; track c){
+          <mat-checkbox [checked]="false" (change)="updateStatesShow(c,$event)">{{c}}</mat-checkbox>
+          }
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
