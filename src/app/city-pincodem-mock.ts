@@ -1,5 +1,7 @@
 export class CityPincodemMock {
-    constructor(){
+    constructor(){}
+    dd() {
+    
           return {
   status: true,
   "districts": [

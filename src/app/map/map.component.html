@@ -1,21 +1,20 @@
-<div class="flex flex-row h-svh">
-  <div class="basis-2/3 relative">
+<div class="flex flex-row h-svh p-5">
+  <div class="basis-1/2 relative map-col">
     <div class="map-container">
       <div class="map-frame">
         <div id="map"></div>
       </div>
     </div>
   </div>
-  <div class="basis-1/3 h-svh">
-    <div class="h-svh">
+  <div class="basis-1/2 h-svh">
+    <div class="h-svh pl-5">
       <mat-form-field>
-        <mat-label>adasd</mat-label>
         <mat-select (selectionChange)="changeMap($event)">
-          <mat-option [value]="'World'">World</mat-option>
           <mat-option [value]="'India'">India</mat-option>
+          <mat-option [value]="'World'">World</mat-option>
         </mat-select>
       </mat-form-field>
-      <div>
+      <div class="states-list">
         <ul>
           @for(c of stateNames; track c){
           <mat-checkbox [checked]="false" (change)="updateStatesShow(c,$event)">{{c}}</mat-checkbox>

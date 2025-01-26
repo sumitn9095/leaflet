@@ -20,6 +20,7 @@ export class MapComponent implements AfterViewInit {
   private world = 'https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/countries.geojson'; // Example GeoJSON API
   private indianStates = 'https://raw.githubusercontent.com/Subhash9325/GeoJson-Data-of-Indian-States/refs/heads/master/Indian_States';
   private geoJsonLayer:any=null;
+  private markersGroup:any;
   private mapSelectionType:string='India';
   public stateNames:string[]=[]
   private geoFeaturesObj:any={}
@@ -77,7 +78,8 @@ export class MapComponent implements AfterViewInit {
   addGeoJsonLayer(data:any){
     if(this.geoJsonLayer !== null) this.map.removeLayer(this.geoJsonLayer);
     this.geoJsonLayer = L.geoJSON(data,{
-      onEachFeature:(feature,layer)=>{
+      onEachFeature:(feature,layer:L.Path)=>{
+        console.log("onEachFeature",layer,data)
         if (feature.properties) {
           let pucontent = ``;
           if(this.mapSelectionType === 'World'){
@@ -87,9 +89,58 @@ export class MapComponent implements AfterViewInit {
             pucontent += `<div class='mapHoverRow'><b>State:</b> ${feature?.properties?.NAME_1}</div>`;
             pucontent += `<div class='mapHoverRow'><b>Type:</b> ${feature?.properties?.TYPE_1}</div>`;
           }
+           const pathLayer = layer as L.Path
           layer.on('mouseover',(e)=>{
             //console.log('country details',pucontent)
             const pu = L.popup().setLatLng(e.latlng).setContent(pucontent).openOn(this.map)
+            layer.setStyle({
+              color: "red", // Highlight border color
+              weight: 3,    // Highlight border width
+              fillColor: "yellow", // Highlight fill color
+              fillOpacity: 0.1,    // Highlight fill opacity
+            });
+          });
+          layer.on('mouseout',()=>{
+           layer.setStyle({
+            color: 'blue',
+            weight: 2,
+            fillColor: "blue", // Highlight fill color
+            fillOpacity: 0.1,    // Highlight fill opacity
+          });
+          });
+         
+          layer.on('click',(e)=>{
+            
+            console.log('country details',pucontent)
+            this._cs.fetchPincode(feature?.properties?.NAME_1).subscribe({
+              next:(data:any)=>{
+                 if(data instanceof HttpResponse) {
+                    console.log("data?.districts",data)
+                    data?.body.districts?.map((y:any)=>{
+                      console.log("!!!!!data?.districts",y)
+                      let markerPopupContent='';
+                      //this.markersGroup = L.layerGroup().addTo(this.map);
+                      const marker = L.marker([y.Latitude, y.Longitude]).addTo(this.map);
+                      markerPopupContent  += `<div class='mapHoverRow'><b>RegionName:</b> ${y.RegionName}</div>`;
+                      markerPopupContent  += `<div class='mapHoverRow'><b>DivisionName:</b> ${y.DivisionName}</div>`;
+                      markerPopupContent  += `<div class='mapHoverRow'><b>Pincode:</b> ${y.Pincode}</div>`;
+                      marker.bindPopup(markerPopupContent).openPopup();
+                    })
+                  }
+              }
+            })
+
+            // let dists:any = this.mockpin.dd()
+
+            // dists?.districts?.map((y:any)=>{
+            //   let markerPopupContent='';
+            //   //this.markersGroup = L.layerGroup().addTo(this.map);
+            //   const marker = L.marker([y.Latitude, y.Longitude]).addTo(this.map);
+            //   markerPopupContent  += `<div class='mapHoverRow'><b>RegionName:</b> ${y.RegionName}</div>`;
+            //   markerPopupContent  += `<div class='mapHoverRow'><b>DivisionName:</b> ${y.DivisionName}</div>`;
+            //   markerPopupContent  += `<div class='mapHoverRow'><b>Pincode:</b> ${y.Pincode}</div>`;
+            //   marker.bindPopup(markerPopupContent).openPopup();
+            // })
           });
           // const marker1 = L.marker([51.5, -0.09]);
           // const marker2 = L.marker([51.51, -0.1]);
@@ -99,7 +150,8 @@ export class MapComponent implements AfterViewInit {
       style: {
         color: 'blue',
         weight: 2,
-        opacity: 0.6,
+        fillColor: "blue", // Highlight fill color
+        fillOpacity: 0.1,    // Highlight fill opacity
       },
     }).addTo(this.map)
   }
@@ -108,18 +160,35 @@ export class MapComponent implements AfterViewInit {
   changeMap(val:any){
     console.log('map-changed',val);
     this.mapSelectionType = val.value;
-    if(val.value === 'World') this.loadGeojson(this.world);
+    if(val.value === 'World') {
+      this.stateNames=[]
+      this.loadGeojson(this.world);
+    }
     else this.loadGeojson(this.indianStates);
   }
 
   updateStatesShow(state:string,val:any){
-    
-    //this.geoObj.features.push()
-
-    let selectedStateTile = this.geoFeaturesObj.find((t:any) => t.properties.NAME_1 === state);
-    this.geoObj.features.push(selectedStateTile);
-    this.addGeoJsonLayer(this.geoObj);
+    this.geoObj.features.push()
+    this.map.eachLayer((layer) => {
+      if (layer instanceof L.Marker) {
+        this.map.removeLayer(layer);
+      }
+    });
+    //this.map.removeLayer(this.markersGroup);
+    if(val.checked) {
+      let selectedStateTile = this.geoFeaturesObj.find((t:any) => t.properties.NAME_1 === state);
+      this.geoObj.features.push(selectedStateTile);
+      this.addGeoJsonLayer(this.geoObj);
+      console.log('state shoed',state,val,this.geoObj);
+    } else {
+      let isStateThere = this.geoObj.features.find((y:any) => y.properties.NAME_1.includes(state))
+      console.log('isStateThere',isStateThere);
+      if(isStateThere.hasOwnProperty('type')) {
+        let tempGeoObj = this.geoObj.features.filter((y:any) => y.properties.NAME_1 !== state)
+        this.geoObj.features = tempGeoObj;
+        this.addGeoJsonLayer(this.geoObj);
+      }
+    }
     console.log('state shoed',state,val,this.geoObj);
-
   }
 }
