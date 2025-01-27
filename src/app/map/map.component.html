@@ -1,26 +1,59 @@
-<div class="flex flex-row h-svh p-5">
-  <div class="basis-1/2 relative map-col">
-    <div class="map-container">
-      <div class="map-frame">
-        <div id="map"></div>
-      </div>
-    </div>
-  </div>
-  <div class="basis-1/2 h-svh">
-    <div class="h-svh pl-5">
-      <mat-form-field>
-        <mat-select (selectionChange)="changeMap($event)">
-          <mat-option [value]="'India'">India</mat-option>
-          <mat-option [value]="'World'">World</mat-option>
-        </mat-select>
-      </mat-form-field>
-      <div class="states-list">
-        <ul>
-          @for(c of stateNames; track c){
-          <mat-checkbox [checked]="false" (change)="updateStatesShow(c,$event)">{{c}}</mat-checkbox>
-          }
-        </ul>
-      </div>
-    </div>
-  </div>
-</div>
+   <div class="flex flex-row flex-wrap h-svh p-5">
+     <div class="basis-1/2 relative map-col">
+       <div class="absolute top-0 right-0">
+         <!-- <app-loader [per]="progress" [progressOver]="progressOver"></app-loader> -->
+       </div>
+       <div class="map-container">
+         <div class="map-frame">
+           <div id="map"></div>
+         </div>
+       </div>
+     </div>
+     <div class="basis-1/2 h-seevh flex">
+       <div class="h-seevh w-full pl-5">
+         <div class="flex justify-between items-start">
+           <mat-form-field>
+             <!-- <mat-label>{{mapSelectionType}}</mat-label> -->
+             <mat-select [(value)]="mapSelectionType" (selectionChange)="changeMap($event)">
+               <mat-option [value]="'India'">India</mat-option>
+               <mat-option [value]="'World'">World</mat-option>
+             </mat-select>
+           </mat-form-field>
+           <app-loader [per]="progress" [progressOver]="progressOver" [loadingName]="loadingName"></app-loader>
+         </div>
+         <div class="states-list">
+           <ul class="states-list-in">
+             @for(c of stateNames; track c){
+             <mat-checkbox [checked]="false" [title]="'Show/Hide '+c+' State Layer'"
+               (change)="updateStatesShow(c,$event)">{{c}}
+             </mat-checkbox>
+             }
+           </ul>
+         </div>
+       </div>
+
+     </div>
+     <div class="basis-full district-wrap mt-5">
+       <div class="district">
+         @for (pn of pincodeDataOfDistricts; track pn.Pincode) {
+         <div class="district-data">
+           @if(pn.Latitude > 0 && pn.Longitude > 0) {
+           <img class="marker absolute top-0 right-4" src="map-marker.svg" alt="Marker Plotted"
+             title="Marker Plotted on Map" width="40" />
+           }
+           <div class="district-pin" title="pincode">{{pn.Pincode}}</div>
+           <div class="district-data-in">
+             <div class='district-data-row'><b>CircleName: </b>{{pn.CircleName}}</div>
+             <div class='district-data-row'><b>RegionName: </b>{{pn.RegionName}}</div>
+             <div class='district-data-row'><b>DivisionName: </b>{{pn.DivisionName}}</div>
+             <div class='district-data-row'><b>OfficeName: </b>{{pn.OfficeName}}</div>
+             <div class='district-data-row'><b>OfficeType: </b>{{pn.OfficeType}}</div>
+             <div class='district-data-row'><b>Delivery: </b>{{pn.Delivery}}</div>
+             <div class='district-data-row'><b>District: </b>{{pn.District}}</div>
+             <div class='district-data-row'><b>StateName: </b>{{pn.StateName}}</div>
+           </div>
+         </div>
+         }
+       </div>
+     </div>
+   </div>

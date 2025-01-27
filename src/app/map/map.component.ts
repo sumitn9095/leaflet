@@ -1,5 +1,5 @@
 import { Component, AfterViewInit } from '@angular/core';
-import {HttpResponse} from '@angular/common/http';
+import {HttpResponse, HttpProgressEvent, HttpEvent, HttpEventType} from '@angular/common/http';
 import { CommonService } from '../common.service';
 import * as L from 'leaflet';
 import { CityPincodemMock } from '../city-pincodem-mock';
@@ -7,11 +7,12 @@ import {MatFormFieldModule} from '@angular/material/form-field';
 import {MatInputModule} from '@angular/material/input';
 import {MatSelectModule} from '@angular/material/select';
 import {MatCheckboxModule} from '@angular/material/checkbox'
+import { LoaderComponent } from '../loader/loader.component';
 
 @Component({
   selector: 'app-map',
   standalone: true,
-  imports: [MatFormFieldModule, MatInputModule, MatSelectModule,MatCheckboxModule],
+  imports: [MatFormFieldModule, MatInputModule, MatSelectModule,MatCheckboxModule,LoaderComponent],
   templateUrl: './map.component.html',
   styleUrl: './map.component.scss',
   providers:[CityPincodemMock]
@@ -21,9 +22,13 @@ export class MapComponent implements AfterViewInit {
   private indianStates = 'https://raw.githubusercontent.com/Subhash9325/GeoJson-Data-of-Indian-States/refs/heads/master/Indian_States';
   private geoJsonLayer:any=null;
   private markersGroup:any;
-  private mapSelectionType:string='India';
+  public mapSelectionType:string='India';
   public stateNames:string[]=[]
   private geoFeaturesObj:any={}
+  loadingName:string=''
+  public progress:number=0
+  public progressOver:boolean=true;
+  public pincodeDataOfDistricts:any[]=[]
   private geoObj:any={
     features:[],
     type:"FeatureCollection"
@@ -33,7 +38,7 @@ export class MapComponent implements AfterViewInit {
   ngAfterViewInit(): void {
      this.initMap();
      this.loadGeojson(this.indianStates);
-     
+      this.loadingName = 'India'
   }
   initMap(){
     this.map = L.map('map').setView([20.5937, 78.9629], 5);
@@ -45,8 +50,18 @@ export class MapComponent implements AfterViewInit {
   loadGeojson(geoUrl:string){
     //let geoUrl = this.world;
     this._cs.fetchGeojson(geoUrl).subscribe({
-      next:(data:any)=>{
-        if(data instanceof HttpResponse) {
+      next:(data:HttpEvent<any>)=>{
+        if(data.type == HttpEventType.Sent ) {
+          this.progressOver = false
+this.progress = 0
+        }
+        else if(data.type == HttpEventType.DownloadProgress ) {
+          const progressEvent = data as HttpProgressEvent;
+            if (progressEvent.total) {
+              this.progress = Math.round((progressEvent.loaded / progressEvent.total) * 100);
+            }
+        }
+        else if(data instanceof HttpResponse) {
           //console.log("mockpincodes",this.mockpin)
            let yuu = this.convertArrayBufferToGeoJson(data.body);
            console.log("yuu",yuu);
@@ -54,7 +69,14 @@ export class MapComponent implements AfterViewInit {
             if(this.mapSelectionType === 'India')this.buildStates(yuu.features)
            this.addGeoJsonLayer(yuu);
         }
-      }
+      },
+      error:(err => {
+        this.progressOver = true
+      }),
+      complete:()=>{
+                 this.progress = 100
+                  this.progressOver = true
+              }
     })
   }
 
@@ -110,14 +132,30 @@ export class MapComponent implements AfterViewInit {
           });
          
           layer.on('click',(e)=>{
-            
+            this.clearMarkers()
             console.log('country details',pucontent)
+            this.loadingName = feature?.properties?.NAME_1
             this._cs.fetchPincode(feature?.properties?.NAME_1).subscribe({
-              next:(data:any)=>{
-                 if(data instanceof HttpResponse) {
+       
+                   next:(data:HttpEvent<any>)=>{
+        if(data.type == HttpEventType.Sent ) {
+          this.progressOver = false
+this.progress = 0
+        }
+        else if(data.type == HttpEventType.DownloadProgress ) {
+          const progressEvent = data as HttpProgressEvent;
+            if (progressEvent.total) {
+              this.progress = Math.round((progressEvent.loaded / progressEvent.total) * 100);
+              
+            }
+        }
+                else if(data instanceof HttpResponse) {
+                 
                     console.log("data?.districts",data)
-                    data?.body.districts?.map((y:any)=>{
-                      console.log("!!!!!data?.districts",y)
+                     this.pincodeDataOfDistricts = data?.body.districts;
+                    data?.body.districts?.map((y:any) => {
+                     
+                      //console.log("!!!!!data?.districts",y)
                       let markerPopupContent='';
                       //this.markersGroup = L.layerGroup().addTo(this.map);
                       const marker = L.marker([y.Latitude, y.Longitude]).addTo(this.map);
@@ -127,7 +165,14 @@ export class MapComponent implements AfterViewInit {
                       marker.bindPopup(markerPopupContent).openPopup();
                     })
                   }
-              }
+              },
+              error:(err => {
+                this.progressOver = true
+              }),
+              complete:()=>{
+                 this.progress = 100
+                  this.progressOver = true
+              },
             })
 
             // let dists:any = this.mockpin.dd()
@@ -160,20 +205,20 @@ export class MapComponent implements AfterViewInit {
   changeMap(val:any){
     console.log('map-changed',val);
     this.mapSelectionType = val.value;
+
     if(val.value === 'World') {
       this.stateNames=[]
       this.loadGeojson(this.world);
+      this.pincodeDataOfDistricts =[]
     }
     else this.loadGeojson(this.indianStates);
+    this.loadingName =this.mapSelectionType;
   }
 
   updateStatesShow(state:string,val:any){
-    this.geoObj.features.push()
-    this.map.eachLayer((layer) => {
-      if (layer instanceof L.Marker) {
-        this.map.removeLayer(layer);
-      }
-    });
+   // this.geoObj.features.push()
+    this.clearMarkers()
+     this.pincodeDataOfDistricts =[]
     //this.map.removeLayer(this.markersGroup);
     if(val.checked) {
       let selectedStateTile = this.geoFeaturesObj.find((t:any) => t.properties.NAME_1 === state);
@@ -190,5 +235,14 @@ export class MapComponent implements AfterViewInit {
       }
     }
     console.log('state shoed',state,val,this.geoObj);
+  }
+
+
+  clearMarkers(){
+    this.map.eachLayer((layer) => {
+      if (layer instanceof L.Marker) {
+        this.map.removeLayer(layer);
+      }
+    });
   }
 }
