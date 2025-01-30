@@ -1,0 +1,44 @@
+    <div class="flex flex-row flex-wrap h-svh p-5">
+      <div class="basis-3/4 relative map-col">
+        <div class="absolute top-0 right-0">
+          <!-- <app-loader [per]="progress" [progressOver]="progressOver"></app-loader> -->
+        </div>
+        <div class="map-container">
+          <div class="map-frame">
+            <div #mapViewDiv style="height: 100%; width: 100%;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="basis-1/4 h-seevh flex">
+        <div class="h-seevh w-full pl-5">
+          <mat-slide-toggle color="primary" (change)="updatePlotPoints($event)">Enable Plotting Points
+          </mat-slide-toggle>
+          <button mat-flat-button color="primary" (click)="removeAllCustomPoints()">Remove all plotted
+            points</button>
+
+        </div>
+      </div>
+      <!-- <div class="basis-full district-wrap mt-5">
+        <div class="district">
+                     @for (pn of pincodeDataOfDistricts; track pn.Pincode) {
+                     <div class="district-data">
+                       @if(pn.Latitude > 0 && pn.Longitude > 0) {
+                       <img class="marker absolute top-0 right-4" src="map-marker.svg" alt="Marker Plotted"
+                         title="Marker Plotted on Map" width="40" />
+                       }
+                       <div class="district-pin" title="pincode">{{pn.Pincode}}</div>
+                       <div class="district-data-in">
+                         <div class='district-data-row'><b>CircleName: </b>{{pn.CircleName}}</div>
+                         <div class='district-data-row'><b>RegionName: </b>{{pn.RegionName}}</div>
+                         <div class='district-data-row'><b>DivisionName: </b>{{pn.DivisionName}}</div>
+                         <div class='district-data-row'><b>OfficeName: </b>{{pn.OfficeName}}</div>
+                         <div class='district-data-row'><b>OfficeType: </b>{{pn.OfficeType}}</div>
+                         <div class='district-data-row'><b>Delivery: </b>{{pn.Delivery}}</div>
+                         <div class='district-data-row'><b>District: </b>{{pn.District}}</div>
+                         <div class='district-data-row'><b>StateName: </b>{{pn.StateName}}</div>
+                       </div>
+                     </div>
+                     }
+                   </div> 
+      </div>-->
+    </div>

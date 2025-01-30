@@ -1,0 +1,304 @@
+// ArcGIS - WebMap 
+
+import { AfterViewInit, Component,CUSTOM_ELEMENTS_SCHEMA, ViewChild,ElementRef} from '@angular/core';
+import {MatButtonModule} from '@angular/material/button'
+import {MatSlideToggleModule} from '@angular/material/slide-toggle'
+import "@arcgis/map-components/dist/components/arcgis-map";
+import "@arcgis/map-components/dist/components/arcgis-zoom";
+import "@arcgis/map-components/dist/components/arcgis-search";
+import "@arcgis/map-components/dist/components/arcgis-expand";
+import "@arcgis/map-components/dist/components/arcgis-legend";
+
+import WebMap from '@arcgis/core/WebMap';
+import Map from '@arcgis/core/Map';
+import MapView from '@arcgis/core/views/MapView';
+import FeatureLayer from '@arcgis/core/layers/FeatureLayer';
+import Graphic from '@arcgis/core/Graphic';
+import Point from "@arcgis/core/geometry/Point";
+import Polyline from "@arcgis/core/geometry/Polyline";
+import Polygon from "@arcgis/core/geometry/Polygon";
+import SimpleMarkerSymbol from "@arcgis/core/symbols/SimpleMarkerSymbol";
+
+@Component({
+  selector: 'app-map-arcgis',
+  templateUrl: './arcgis-map.component.html',
+  standalone:true,
+  styleUrls: ['./arcgis-map.component.scss'],
+  imports: [MatSlideToggleModule,MatButtonModule],
+  schemas:[CUSTOM_ELEMENTS_SCHEMA]
+})
+export class ArcgisMapComponent implements AfterViewInit {
+  //initLatLng:number[]=[-73.79144999999875, 40.703683118287934];
+  initLatLng:number[]=[-82.44109, 35.6122];
+
+  map!: Map;
+  webMap!:WebMap;
+  view!: MapView;
+  graphic!:Graphic
+  pointId:number=0;
+
+  enablePlotPoints:boolean=false;
+
+  // @ViewChild('calciteNavigationLogo') calciteNavigationLogo!:ElementRef
+  // constructor() {
+  //   setCalciteComponentsAssetPath("https://js.arcgis.com/calcite-components/2.13.2/assets");
+  // }
+
+   @ViewChild('mapViewDiv', { static: true }) mapViewEl!: ElementRef;
+
+  // arcgisViewChange(event: ArcgisMapCustomEvent<any>) {
+  //    //console.log("arcGIS event: ", event);
+  //     const { center, zoom } = event?.target;
+  //     console.log("Center (lon/lat): ", `${center?.longitude}, ${center?.latitude}`);
+  //     console.log("Zoom: ", zoom);
+
+  //     const { portalItem } = event?.target?.map;
+  //         const navigationLogo = this.calciteNavigationLogo.nativeElement;
+  //         navigationLogo.heading = portalItem?.title;
+  //         navigationLogo.description = portalItem?.snippet;
+  //         navigationLogo.thumbnail = portalItem?.thumbnailUrl;
+  //         navigationLogo.href = portalItem?.itemPageUrl;
+  //         navigationLogo.label = "Thumbnail of map";
+  // }
+
+ngAfterViewInit(): void {
+    this.map = new Map({
+      basemap: 'streets-navigation-vector', // Dynamic Basemap
+    });
+    this.view = new MapView({
+      container: this.mapViewEl.nativeElement,
+      map: this.map,
+      center: this.initLatLng, // Dynamic Center (Delhi, India)
+      zoom: 17
+    });
+
+
+    // view hitTest
+    // this.view.popupEnabled = false;  // Disable the default popup behavior
+    // this.view.on("click", function(event) { // Listen for the click event
+    //   view.hitTest(event).then(function (hitTestResults){ // Search for features where the user clicked
+    //     if(hitTestResults.results) {
+    //       view.openPopup({ // open a popup to show some of the results
+    //         location: event.mapPoint,
+    //         title: "Hit Test Results",
+    //         content: hitTestResults.results.length + "Features Found"
+    //       });
+    //     }
+    //   })
+    // });
+
+
+    // ✅ Add Click Event Listener
+    this.view.when(() => {
+      this.view.on("click", (event) => {
+        this.handleMapClick(event);
+      });
+    });
+
+    // Add a popup, with 'Feature Layer Fields' data, when clicked on Feature Layer Fields points.
+    const popupTrailheads = {
+      title: "{Crew}",
+      content:
+        "<b>FID:</b> {FID}<br><b>Tree_ID:</b> {Tree_ID}<br><b>Collected:</b> {Collected}<br><b>Crew:</b> {Crew}<br><b>Status:</b> {status}<br><b>Land_Use:</b> {Land_Use}<br><b>Tree_Age:</b> {Tree_Age}<br><b>Condition:</b> {Condition}<br><b>GroundArea:</b> {GroundArea}<br><b>Live_Top:</b> {Live_Top}<br><b>Crown_Base:</b> {Crown_Base}<br><b>Tree_Site:</b> {Tree_Site}<br><b>Sci_Name:</b> {Sci_Name}<br><b>S_Value:</b> {S_Value}<br><b>Street:</b> {Street}<br><b>Native:</b> {Native}<br><b>Dedication:</b> {Dedication}"
+    };
+    const featureLayer = new FeatureLayer({
+      url:"https://services.arcgis.com/V6ZHFr6zdgNZuVG0/arcgis/rest/services/Landscape_Trees/FeatureServer/0",
+       outFields: ["TRL_NAME", "CITY_JUR", "X_STREET", "PARKING", "status","Land_Use","Live_Top","Crown_Base","Tree_Site","Tree_Age","Condition","GroundArea","Sci_Name","S_Value","Street","Native","Dedication"],
+        popupTemplate: popupTrailheads
+    }); 
+    this.map.add(featureLayer);
+
+    // Fetch the 'Feature Layer Fields:', to interact with them
+    // featureLayer.load().then(() => {
+    //   featureLayer.fields.forEach((r:any)=>{
+    //     console.log('Feature Layer Fields name:', r?.name);
+    //   })
+    // });
+
+  // Create an object for storing attributes related to the line
+  const lineAtt = {
+    Name: "Keystone Pipeline",
+    Owner: "TransCanada",
+    Length: "3,456 km",
+     customPoint: true
+  };
+
+  const pointGraphic = new Point({
+    x: this.initLatLng[0],
+    y: this.initLatLng[1],
+    spatialReference: { wkid: 4326 } // Optional but recommended
+  });
+
+  const pointSymbol = new SimpleMarkerSymbol({
+  color: "red",
+  size: "12px"
+});
+
+//   const polylineGeometry = new Polyline({
+//   paths: [
+//     [77.1025, 28.7041],  // Point 1 (x, y)
+//     [78.4867, 17.3850]   // Point 2
+//   ],
+//   spatialReference: { wkid: 4326 } // Optional but recommended
+// });
+
+
+// const polygonGeometry = new Polygon({
+//   rings: [
+//     [77.1025, 28.7041], // Point 1 (x, y)
+//     [78.4867, 17.3850], // Point 2
+//     [72.8777, 19.0760], // Point 3
+//     [77.1025, 28.7041]  // Closing the polygon
+//   ],
+//   spatialReference: { wkid: 4326 }
+// });
+
+
+  // Graphic - Point -------------------------------------
+  this.graphic = new Graphic({
+   geometry: pointGraphic,
+     symbol: pointSymbol,
+    attributes: lineAtt,
+    popupTemplate: {
+      // autocasts as new PopupTemplate()
+      title: "{Name}",
+      content: [
+        {
+          type: "fields",
+          fieldInfos: [
+            {
+              fieldName: "Name"
+            },
+            {
+              fieldName: "Owner"
+            },
+            {
+              fieldName: "Length"
+            }
+          ]
+        }
+      ]
+    }
+  });
+  // Add the line graphic to the view's GraphicsLayer
+  this.view.graphics.add(this.graphic);
+  }
+
+handleMapClick = async(event: any) =>{
+
+  this.pointId++;
+ const lineAtt = {
+          Name: `Point ${this.pointId}`,
+          Owner: "TransCanada",
+          Length: "3,456 km",
+          customPoint: true,
+          Latitude:event.mapPoint.latitude,
+          Longitude:event.mapPoint.longitude
+        };
+
+  const hitResponse = await this.view.hitTest(event);
+console.log("mapPoint",event.mapPoint,event)
+    // Check if any feature was clicked
+    if (hitResponse.results.length > 0) {
+      //const graphic = hitResponse?.results[0]?.graphic; // First clicked feature
+      console.log("hitResponse.results : ", hitResponse.results);
+       const graphicHit = hitResponse.results.find((result) => "graphic" in result);
+      if (graphicHit) {
+      const graphic = (graphicHit as any).graphic; 
+      console.log("Feature clicked:", graphic.attributes);
+
+      if(graphic.attributes.hasOwnProperty('FID') || graphic.attributes.hasOwnProperty('customPoint')) {
+
+      
+        // Show a popup with feature details
+        // this.view.popup.open({
+        //   title: "Feature Info",
+        //   content: `Feature ID: ${graphic.attributes.OBJECTID}`, // Customize this based on your layer's attributes
+        //   location: event.mapPoint,
+        // });
+      } else {
+      console.log("No features clicked, new Point added");
+        
+        if(this.enablePlotPoints) {
+        
+        // Convert screen click to map coordinates
+        const pointt = new Point({
+          x: event.mapPoint.longitude,
+          y: event.mapPoint.latitude,
+          spatialReference: { wkid: 4326 },
+        });
+
+        // Create a simple marker symbol
+        const symbol = new SimpleMarkerSymbol({
+          color: "blue",
+          size: "10px",
+        });
+
+        // Create a graphic and add it to the view
+        const graphiccc = new Graphic({
+          geometry: pointt,
+          symbol: symbol,
+          attributes: lineAtt,
+          popupTemplate: {
+            // autocasts as new PopupTemplate()
+            title: "{Name}",
+            content: [
+              {
+                type: "fields",
+                fieldInfos: [
+                  {
+                    fieldName: "Name"
+                  },
+                  {
+                    fieldName: "Owner"
+                  },
+                  {
+                    fieldName: "Latitude"
+                  },
+                  {
+                    fieldName: "Longitude"
+                  }
+                ]
+              }
+            ]
+          }
+        });
+
+        this.view.graphics.remove(graphiccc); // Clear previous markers
+        this.view.graphics.add(graphiccc);
+
+        console.log(`Clicked at: ${pointt.x}, ${pointt.y}`);
+        }
+      }
+    } 
+    }
+   
+  }
+
+updatePlotPoints(data:any){
+  console.log("plot points:",data);
+  this.enablePlotPoints=data.checked
+}
+
+removeAllCustomPoints(){
+  this.view.graphics.removeAll();
+}
+
+//   // Attach Event Listener for View Change
+//     this.view.when(() => {
+//         console.log('WebMap Loaded Successfully!');
+
+//         // Watch for changes in the map's extent (view change)
+//         this.view.watch('extent', (newExtent) => {
+//           console.log('View changed:', newExtent);
+//          // this.handleViewChange(newExtent);
+//         });
+
+//         // Alternative: Detect zoom level changes
+//         this.view.watch('zoom', (newScale) => {
+//           console.log('Zoom level changed:', newScale);
+//         });
+//       });
+// }
+
+}
