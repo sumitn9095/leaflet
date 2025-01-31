@@ -66,6 +66,17 @@
     overflow-x: auto;
     padding-top: 20px;
 
+    .goto {
+      width: 100%;
+      display: block;
+      text-align: center;
+      border-bottom: 1px solid rgb(37, 76, 160);
+      color: rgb(37, 76, 160);
+      text-decoration: underline;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
     .district-pin,
     .district-data {
       padding: 6px 10px;

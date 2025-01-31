@@ -11,25 +11,35 @@
       </div>
       <div class="basis-1/4 h-seevh flex map-controls">
         <div class="h-seevh w-full pl-5">
-          <div class="rw mb-2">
-            <mat-slide-toggle color="primary" (change)="updatePlotPoints($event)">Enable Plotting Points
-            </mat-slide-toggle>
-          </div>
           <div class="rw mb-4">
-            <button mat-flat-button color="primary" (click)="removeAllCustomPoints()">Remove all plotted
+            <div class="mb-2">
+              <mat-slide-toggle [color]="'accent'" (change)="updatePlotPoints($event)">Enable Plotting Points
+              </mat-slide-toggle>
+            </div>
+            <button mat-flat-button [color]="'warn'" (click)="removeAllCustomPoints()">Remove all plotted
               points</button>
           </div>
-          <div class="rw ">
+          <div class="rw mb-2">
             <p class="flex justify-between">Query GroundArea Field <span class="range-values flex"><span
                   class="range-start">{{rangeStart.value}}</span>-<span
                   class="range-end">{{rangeEnd.value}}</span></span></p>
             <div class="w-full text-center">
-              <mat-slider min="1" max="4000" step="10">
+              <mat-slider min="1" max="4000" step="10" [color]="'accent'">
                 <input #rangeStart value="0" matSliderStartThumb
                   (dragEnd)="onFeatureQuery('GroundArea','range',$event)">
                 <input #rangeEnd value="4000" matSliderEndThumb (dragEnd)="onFeatureQuery('GroundArea','range',$event)">
               </mat-slider>
             </div>
+          </div>
+          <div class="rw">
+            <p class="flex justify-between">Query Condition Field</p>
+            <mat-form-field [appearance]="'fill'" [color]="'accent'">
+              <mat-select [placeholder]="'Select'" (selectionChange)="onFeatureQuery('Condition','select',$event)">
+                @for (c of conditions; track c) {
+                <mat-option [value]="c">{{c}}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
           </div>
         </div>
       </div>
@@ -40,6 +50,7 @@
 
             <img class="marker absolute top-0 right-4" src="map-marker.svg" alt="Marker Plotted"
               title="Marker Plotted on Map" width="40" />
+            <a (click)="goto_location([pn.Longitude,pn.Latitude])" class="goto">Goto Location on Map</a>
 
             <div class="district-pin" title="FID">{{pn.FID}}</div>
             <div class="district-data-in">

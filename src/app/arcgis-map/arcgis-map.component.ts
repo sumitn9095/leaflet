@@ -22,13 +22,15 @@ import Polygon from "@arcgis/core/geometry/Polygon";
 import SimpleMarkerSymbol from "@arcgis/core/symbols/SimpleMarkerSymbol";
 import Query from "@arcgis/core/rest/support/Query";
 import SimpleFillSymbol from "@arcgis/core/symbols/SimpleFillSymbol";
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
 
 @Component({
   selector: 'app-map-arcgis',
   templateUrl: './arcgis-map.component.html',
   standalone:true,
   styleUrls: ['./arcgis-map.component.scss'],
-  imports: [MatSlideToggleModule,MatButtonModule,MatSliderModule],
+  imports: [MatSlideToggleModule,MatButtonModule,MatSliderModule, MatSelectModule,MatFormFieldModule],
   schemas:[CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ArcgisMapComponent implements AfterViewInit {
@@ -46,6 +48,7 @@ export class ArcgisMapComponent implements AfterViewInit {
   pointDataAttrs:any[]=[];
   layerView:any=[];
   rangeVal:number[]=[0,0];
+  conditions:string[]=['Poor','Good','Excellent']
   // @ViewChild('calciteNavigationLogo') calciteNavigationLogo!:ElementRef
   // constructor() {
   //   setCalciteComponentsAssetPath("https://js.arcgis.com/calcite-components/2.13.2/assets");
@@ -109,7 +112,7 @@ ngAfterViewInit(): void {
         "<b>FID:</b> {FID}<br><b>Tree_ID:</b> {Tree_ID}<br><b>Collected:</b> {Collected}<br><b>Crew:</b> {Crew}<br><b>Status:</b> {status}<br><b>Land_Use:</b> {Land_Use}<br><b>Tree_Age:</b> {Tree_Age}<br><b>Condition:</b> {Condition}<br><b>GroundArea:</b> {GroundArea}<br><b>Live_Top:</b> {Live_Top}<br><b>Crown_Base:</b> {Crown_Base}<br><b>Tree_Site:</b> {Tree_Site}<br><b>Sci_Name:</b> {Sci_Name}<br><b>S_Value:</b> {S_Value}<br><b>Street:</b> {Street}<br><b>Native:</b> {Native}<br><b>Dedication:</b> {Dedication}"
     };
 
-    
+    // FeatureLayer - Added
     this.featureLayer = new FeatureLayer({
       url:this.landscape_trees_featurelayer_url,
        outFields: ["TRL_NAME", "CITY_JUR", "X_STREET", "PARKING", "status","Land_Use","Live_Top","Crown_Base","Tree_Site","Tree_Age","Condition","GroundArea","Sci_Name","S_Value","Street","Native","Dedication"],
@@ -190,13 +193,13 @@ ngAfterViewInit(): void {
   //   }
   // });
   // Add the line graphic to the view's GraphicsLayer
-  this.view.graphics.add(this.graphic);
-   // ✅ Wait for the layer to load, then query
-    this.view.whenLayerView(this.featureLayer).then((layerView) => {
-      console.log("layerView",layerView);
-      //this.layerView=layerView;
-      //this.queryLayerView(layerView);
-    });
+  // this.view.graphics.add(this.graphic);
+  //  // ✅ Wait for the layer to load, then query
+  //   this.view.whenLayerView(this.featureLayer).then((layerView) => {
+  //     console.log("layerView",layerView);
+  //     //this.layerView=layerView;
+  //     //this.queryLayerView(layerView);
+  //   });
   }
 
   handleMapClick = async(event: any) =>{
@@ -245,7 +248,7 @@ console.log("mapPoint",event.mapPoint,event)
 
         // Create a simple marker symbol
         const symbol = new SimpleMarkerSymbol({
-          color: "blue",
+          color: "red",
           size: "10px",
         });
 
@@ -313,12 +316,34 @@ console.log("mapPoint",event.mapPoint,event)
       //   console.log("Parcel ID:", feature.attributes.ParcelID);
       //   console.log("Geometry:", feature.geometry);
       // });
-      setTimeout(() => {
+
+
+      // --------- S ------------
+      const symbol = {
+        type: "simple-fill",
+        color: [20, 130, 200, 0.5],
+        outline: {
+          color: "white",
+          width: 0.5
+        }
+      };
+
+       const pointFillSymbol = new SimpleFillSymbol({
+             type: "simple-fill",
+              color: [20, 130, 200, 0.5],
+              outline: {
+                color: "white",
+                width: 0.5
+              }
+          });
+      
+      //setTimeout(() => {
         
        
-        response.features.forEach((feature:any) => {
+        response.features.map((feature:any) => {
           this.pointDataAttrs.push(feature.attributes)
 
+          // ------ NOT Working ---------
           // let point12 = new Point({
           //   x: feature.geometry.longitude,
           //   y: feature.geometry.latitude,
@@ -333,23 +358,34 @@ console.log("mapPoint",event.mapPoint,event)
           // });
           // this.view.graphics.add(this.graphic)
 
+          // ------ Working --------------
           const pointGraphic = new Point({
             x: feature.geometry.longitude,
             y: feature.geometry.latitude,
-            //spatialReference: { wkid: 4326 } // Optional but recommended
           });
           const pointSymbol = new SimpleMarkerSymbol({
-            color: "red",
-            size: "12px"
+            color: "transparent",
+            outline: {
+                color: "blue",
+                width: 2
+              },
+            size: `${feature.attributes.GroundArea/94}px`
           });
           this.graphic = new Graphic({
             geometry: pointGraphic,
             symbol: pointSymbol,
+            //symbol: symbol,
           })
           this.view.graphics.add(this.graphic)
 
+          // --------------------
+          //feature.symbol = symbol;
+          //feature.geometry = pointGraphic;
+          //return feature;
         });
-      }, 1800);
+
+        //this.view.graphics.addMany(response.features);
+      //}, 1800);
     })
     .catch(function(error) {
       console.error("Query failed:", error);
@@ -376,15 +412,23 @@ removeAllCustomPoints(){
 }
 
 onFeatureQuery(field:string,type:string,data:any) {
+  console.log("onFeatureQuery:",field,type,data);
   if(type === 'range') {
     this.rangeVal[data?.source?.thumbPosition-1]=data?.source?.value;
     if(this.rangeVal[0]!==undefined || this.rangeVal[1]!==undefined) {
-       console.log("onFeatureQuery:",data);
       //this.queryLayerView(`${field} > ${rangeVal[0]} && ${field} < ${rangeVal[1]}`)
       this.queryLayerView(`${field} BETWEEN ${this.rangeVal[0]} AND ${this.rangeVal[1]}`)
     }
+  } else if(type === 'select') {
+    this.queryLayerView(`${field} = '${data.value}'`)
   }
-  
+}
+
+goto_location(longLat:number[]){
+  this.view.goTo(                           // go to point with a custom animation duration
+    { center: longLat },
+    { duration: 2000 }
+  );
 }
 
 //   // Attach Event Listener for View Change
