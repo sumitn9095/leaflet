@@ -9,36 +9,51 @@
           </div>
         </div>
       </div>
-      <div class="basis-1/4 h-seevh flex">
+      <div class="basis-1/4 h-seevh flex map-controls">
         <div class="h-seevh w-full pl-5">
-          <mat-slide-toggle color="primary" (change)="updatePlotPoints($event)">Enable Plotting Points
-          </mat-slide-toggle>
-          <button mat-flat-button color="primary" (click)="removeAllCustomPoints()">Remove all plotted
-            points</button>
-
+          <div class="rw mb-2">
+            <mat-slide-toggle color="primary" (change)="updatePlotPoints($event)">Enable Plotting Points
+            </mat-slide-toggle>
+          </div>
+          <div class="rw mb-4">
+            <button mat-flat-button color="primary" (click)="removeAllCustomPoints()">Remove all plotted
+              points</button>
+          </div>
+          <div class="rw ">
+            <p class="flex justify-between">Query GroundArea Field <span class="range-values flex"><span
+                  class="range-start">{{rangeStart.value}}</span>-<span
+                  class="range-end">{{rangeEnd.value}}</span></span></p>
+            <div class="w-full text-center">
+              <mat-slider min="1" max="4000" step="10">
+                <input #rangeStart value="0" matSliderStartThumb
+                  (dragEnd)="onFeatureQuery('GroundArea','range',$event)">
+                <input #rangeEnd value="4000" matSliderEndThumb (dragEnd)="onFeatureQuery('GroundArea','range',$event)">
+              </mat-slider>
+            </div>
+          </div>
         </div>
       </div>
-      <!-- <div class="basis-full district-wrap mt-5">
+      <div class="basis-full district-wrap mt-5">
         <div class="district">
-                     @for (pn of pincodeDataOfDistricts; track pn.Pincode) {
-                     <div class="district-data">
-                       @if(pn.Latitude > 0 && pn.Longitude > 0) {
-                       <img class="marker absolute top-0 right-4" src="map-marker.svg" alt="Marker Plotted"
-                         title="Marker Plotted on Map" width="40" />
-                       }
-                       <div class="district-pin" title="pincode">{{pn.Pincode}}</div>
-                       <div class="district-data-in">
-                         <div class='district-data-row'><b>CircleName: </b>{{pn.CircleName}}</div>
-                         <div class='district-data-row'><b>RegionName: </b>{{pn.RegionName}}</div>
-                         <div class='district-data-row'><b>DivisionName: </b>{{pn.DivisionName}}</div>
-                         <div class='district-data-row'><b>OfficeName: </b>{{pn.OfficeName}}</div>
-                         <div class='district-data-row'><b>OfficeType: </b>{{pn.OfficeType}}</div>
-                         <div class='district-data-row'><b>Delivery: </b>{{pn.Delivery}}</div>
-                         <div class='district-data-row'><b>District: </b>{{pn.District}}</div>
-                         <div class='district-data-row'><b>StateName: </b>{{pn.StateName}}</div>
-                       </div>
-                     </div>
-                     }
-                   </div> 
-      </div>-->
+          @for (pn of pointDataAttrs; track pn.FID) {
+          <div class="district-data">
+
+            <img class="marker absolute top-0 right-4" src="map-marker.svg" alt="Marker Plotted"
+              title="Marker Plotted on Map" width="40" />
+
+            <div class="district-pin" title="FID">{{pn.FID}}</div>
+            <div class="district-data-in">
+              <div class='district-data-row'><b>Sci_Name: </b>{{pn.Sci_Name}}</div>
+              <div class='district-data-row'><b>Cmn_Name: </b>{{pn.Cmn_Name}}</div>
+              <div class='district-data-row'><b>Condition: </b>{{pn.Condition}}</div>
+              <div class='district-data-row'><b>Crew: </b>{{pn.Crew}}</div>
+              <div class='district-data-row'><b>Crown_Height: </b>{{pn.Crown_Height}}</div>
+              <div class='district-data-row'><b>GroundArea: </b>{{pn.GroundArea}}</div>
+              <div class='district-data-row'><b>Native: </b>{{pn.Native}}</div>
+              <div class='district-data-row'><b>S_Value: </b>{{pn.S_Value}}</div>
+            </div>
+          </div>
+          }
+        </div>
+      </div>
     </div>

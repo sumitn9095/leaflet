@@ -3,6 +3,7 @@
 import { AfterViewInit, Component,CUSTOM_ELEMENTS_SCHEMA, ViewChild,ElementRef} from '@angular/core';
 import {MatButtonModule} from '@angular/material/button'
 import {MatSlideToggleModule} from '@angular/material/slide-toggle'
+import {MatSliderModule} from '@angular/material/slider';
 import "@arcgis/map-components/dist/components/arcgis-map";
 import "@arcgis/map-components/dist/components/arcgis-zoom";
 import "@arcgis/map-components/dist/components/arcgis-search";
@@ -13,18 +14,21 @@ import WebMap from '@arcgis/core/WebMap';
 import Map from '@arcgis/core/Map';
 import MapView from '@arcgis/core/views/MapView';
 import FeatureLayer from '@arcgis/core/layers/FeatureLayer';
+import ParcelLayer from '@arcgis/core/layers/FeatureLayer';
 import Graphic from '@arcgis/core/Graphic';
 import Point from "@arcgis/core/geometry/Point";
 import Polyline from "@arcgis/core/geometry/Polyline";
 import Polygon from "@arcgis/core/geometry/Polygon";
 import SimpleMarkerSymbol from "@arcgis/core/symbols/SimpleMarkerSymbol";
+import Query from "@arcgis/core/rest/support/Query";
+import SimpleFillSymbol from "@arcgis/core/symbols/SimpleFillSymbol";
 
 @Component({
   selector: 'app-map-arcgis',
   templateUrl: './arcgis-map.component.html',
   standalone:true,
   styleUrls: ['./arcgis-map.component.scss'],
-  imports: [MatSlideToggleModule,MatButtonModule],
+  imports: [MatSlideToggleModule,MatButtonModule,MatSliderModule],
   schemas:[CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ArcgisMapComponent implements AfterViewInit {
@@ -36,9 +40,12 @@ export class ArcgisMapComponent implements AfterViewInit {
   view!: MapView;
   graphic!:Graphic
   pointId:number=0;
-
+  featureLayer!:FeatureLayer;
+  landscape_trees_featurelayer_url:string ="https://services.arcgis.com/V6ZHFr6zdgNZuVG0/arcgis/rest/services/Landscape_Trees/FeatureServer/0";
   enablePlotPoints:boolean=false;
-
+  pointDataAttrs:any[]=[];
+  layerView:any=[];
+  rangeVal:number[]=[0,0];
   // @ViewChild('calciteNavigationLogo') calciteNavigationLogo!:ElementRef
   // constructor() {
   //   setCalciteComponentsAssetPath("https://js.arcgis.com/calcite-components/2.13.2/assets");
@@ -97,16 +104,18 @@ ngAfterViewInit(): void {
 
     // Add a popup, with 'Feature Layer Fields' data, when clicked on Feature Layer Fields points.
     const popupTrailheads = {
-      title: "{Crew}",
+      title: "{FID}",
       content:
         "<b>FID:</b> {FID}<br><b>Tree_ID:</b> {Tree_ID}<br><b>Collected:</b> {Collected}<br><b>Crew:</b> {Crew}<br><b>Status:</b> {status}<br><b>Land_Use:</b> {Land_Use}<br><b>Tree_Age:</b> {Tree_Age}<br><b>Condition:</b> {Condition}<br><b>GroundArea:</b> {GroundArea}<br><b>Live_Top:</b> {Live_Top}<br><b>Crown_Base:</b> {Crown_Base}<br><b>Tree_Site:</b> {Tree_Site}<br><b>Sci_Name:</b> {Sci_Name}<br><b>S_Value:</b> {S_Value}<br><b>Street:</b> {Street}<br><b>Native:</b> {Native}<br><b>Dedication:</b> {Dedication}"
     };
-    const featureLayer = new FeatureLayer({
-      url:"https://services.arcgis.com/V6ZHFr6zdgNZuVG0/arcgis/rest/services/Landscape_Trees/FeatureServer/0",
+
+    
+    this.featureLayer = new FeatureLayer({
+      url:this.landscape_trees_featurelayer_url,
        outFields: ["TRL_NAME", "CITY_JUR", "X_STREET", "PARKING", "status","Land_Use","Live_Top","Crown_Base","Tree_Site","Tree_Age","Condition","GroundArea","Sci_Name","S_Value","Street","Native","Dedication"],
         popupTemplate: popupTrailheads
     }); 
-    this.map.add(featureLayer);
+    this.map.add(this.featureLayer);
 
     // Fetch the 'Feature Layer Fields:', to interact with them
     // featureLayer.load().then(() => {
@@ -155,36 +164,42 @@ ngAfterViewInit(): void {
 
 
   // Graphic - Point -------------------------------------
-  this.graphic = new Graphic({
-   geometry: pointGraphic,
-     symbol: pointSymbol,
-    attributes: lineAtt,
-    popupTemplate: {
-      // autocasts as new PopupTemplate()
-      title: "{Name}",
-      content: [
-        {
-          type: "fields",
-          fieldInfos: [
-            {
-              fieldName: "Name"
-            },
-            {
-              fieldName: "Owner"
-            },
-            {
-              fieldName: "Length"
-            }
-          ]
-        }
-      ]
-    }
-  });
+  // this.graphic = new Graphic({
+  // geometry: pointGraphic,
+  // symbol: pointSymbol,
+  // attributes: lineAtt,
+  //   popupTemplate: {
+  //     // autocasts as new PopupTemplate()
+  //     title: "{Name}",
+  //     content: [
+  //       {
+  //         type: "fields",
+  //         fieldInfos: [
+  //           {
+  //             fieldName: "Name"
+  //           },
+  //           {
+  //             fieldName: "Owner"
+  //           },
+  //           {
+  //             fieldName: "Length"
+  //           }
+  //         ]
+  //       }
+  //     ]
+  //   }
+  // });
   // Add the line graphic to the view's GraphicsLayer
   this.view.graphics.add(this.graphic);
+   // ✅ Wait for the layer to load, then query
+    this.view.whenLayerView(this.featureLayer).then((layerView) => {
+      console.log("layerView",layerView);
+      //this.layerView=layerView;
+      //this.queryLayerView(layerView);
+    });
   }
 
-handleMapClick = async(event: any) =>{
+  handleMapClick = async(event: any) =>{
 
   this.pointId++;
  const lineAtt = {
@@ -272,8 +287,84 @@ console.log("mapPoint",event.mapPoint,event)
       }
     } 
     }
-   
   }
+
+  async queryLayerView(whereClause: string) {
+    console.log("whereClause",whereClause)
+    const query = new Query();
+    query.where = whereClause; // Change condition as needed
+    query.returnGeometry = true;
+    query.outFields = ["*"]; // Retrieve all fields
+
+    let aqq = this.highlightSymbol;
+    let bqq = this.view;
+    // Execute the query
+    let garr:any = [];
+    let pointDataAttrsArr:any[]=[]
+  new ParcelLayer({ url:this.landscape_trees_featurelayer_url}).queryFeatures(query)
+    .then((response) => {
+      this.pointDataAttrs=[];
+      this.view.graphics.removeAll();
+      // Handle the results
+      console.log("Query results:", response.features);
+
+      // Optionally, display the results on the map
+      // response.features.forEach(function(feature) {
+      //   console.log("Parcel ID:", feature.attributes.ParcelID);
+      //   console.log("Geometry:", feature.geometry);
+      // });
+      setTimeout(() => {
+        
+       
+        response.features.forEach((feature:any) => {
+          this.pointDataAttrs.push(feature.attributes)
+
+          // let point12 = new Point({
+          //   x: feature.geometry.longitude,
+          //   y: feature.geometry.latitude,
+          // });
+          // this.graphic = new Graphic({
+          //   geometry: point12,
+          //   symbol: new SimpleFillSymbol({
+          //     style: "solid",
+          //     color: 'rgba(39, 163, 35, 0.4)', // Red transparent fill
+          //     outline: { color: "red", width: 2 },
+          //   }),
+          // });
+          // this.view.graphics.add(this.graphic)
+
+          const pointGraphic = new Point({
+            x: feature.geometry.longitude,
+            y: feature.geometry.latitude,
+            //spatialReference: { wkid: 4326 } // Optional but recommended
+          });
+          const pointSymbol = new SimpleMarkerSymbol({
+            color: "red",
+            size: "12px"
+          });
+          this.graphic = new Graphic({
+            geometry: pointGraphic,
+            symbol: pointSymbol,
+          })
+          this.view.graphics.add(this.graphic)
+
+        });
+      }, 1800);
+    })
+    .catch(function(error) {
+      console.error("Query failed:", error);
+    });
+    // this.pointDataAttrs = ;
+    // setTimeout(() => {
+    //     garr.forEach((f:any)=>this.view.graphics.add(f))
+    // }, 1800);
+    
+  }
+
+highlightSymbol = new SimpleFillSymbol({
+  color: [255, 0, 0, 0.4], // Red transparent fill
+  outline: { color: "red", width: 4 },
+});
 
 updatePlotPoints(data:any){
   console.log("plot points:",data);
@@ -282,6 +373,18 @@ updatePlotPoints(data:any){
 
 removeAllCustomPoints(){
   this.view.graphics.removeAll();
+}
+
+onFeatureQuery(field:string,type:string,data:any) {
+  if(type === 'range') {
+    this.rangeVal[data?.source?.thumbPosition-1]=data?.source?.value;
+    if(this.rangeVal[0]!==undefined || this.rangeVal[1]!==undefined) {
+       console.log("onFeatureQuery:",data);
+      //this.queryLayerView(`${field} > ${rangeVal[0]} && ${field} < ${rangeVal[1]}`)
+      this.queryLayerView(`${field} BETWEEN ${this.rangeVal[0]} AND ${this.rangeVal[1]}`)
+    }
+  }
+  
 }
 
 //   // Attach Event Listener for View Change
