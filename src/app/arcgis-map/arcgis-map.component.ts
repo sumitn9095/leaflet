@@ -15,6 +15,7 @@ import Map from '@arcgis/core/Map';
 import MapView from '@arcgis/core/views/MapView';
 import FeatureLayer from '@arcgis/core/layers/FeatureLayer';
 import ParcelLayer from '@arcgis/core/layers/FeatureLayer';
+import GeoJSONLayer from '@arcgis/core/layers/GeoJSONLayer';
 import Graphic from '@arcgis/core/Graphic';
 import Point from "@arcgis/core/geometry/Point";
 import Polyline from "@arcgis/core/geometry/Polyline";
@@ -24,13 +25,14 @@ import Query from "@arcgis/core/rest/support/Query";
 import SimpleFillSymbol from "@arcgis/core/symbols/SimpleFillSymbol";
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { SpinnerComponent } from '../spinner/spinner.component';
 
 @Component({
   selector: 'app-map-arcgis',
   templateUrl: './arcgis-map.component.html',
   standalone:true,
   styleUrls: ['./arcgis-map.component.scss'],
-  imports: [MatSlideToggleModule,MatButtonModule,MatSliderModule, MatSelectModule,MatFormFieldModule],
+  imports: [MatSlideToggleModule,MatButtonModule,MatSliderModule, MatSelectModule,MatFormFieldModule,SpinnerComponent],
   schemas:[CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ArcgisMapComponent implements AfterViewInit {
@@ -43,19 +45,22 @@ export class ArcgisMapComponent implements AfterViewInit {
   graphic!:Graphic
   pointId:number=0;
   featureLayer!:FeatureLayer;
+  geoJsonLayer!:GeoJSONLayer;
   landscape_trees_featurelayer_url:string ="https://services.arcgis.com/V6ZHFr6zdgNZuVG0/arcgis/rest/services/Landscape_Trees/FeatureServer/0";
   enablePlotPoints:boolean=false;
   pointDataAttrs:any[]=[];
   layerView:any=[];
   rangeVal:number[]=[0,0];
-  conditions:string[]=['Poor','Good','Excellent']
+  isLayerViewQueryWorking:boolean=false;
+  conditions:string[]=['Poor','Good','Excellent'];
+  private indianStates = 'https://raw.githubusercontent.com/Subhash9325/GeoJson-Data-of-Indian-States/refs/heads/master/Indian_States';
   // @ViewChild('calciteNavigationLogo') calciteNavigationLogo!:ElementRef
   // constructor() {
   //   setCalciteComponentsAssetPath("https://js.arcgis.com/calcite-components/2.13.2/assets");
   // }
 
-   @ViewChild('mapViewDiv', { static: true }) mapViewEl!: ElementRef;
-
+  @ViewChild('mapViewDiv', { static: true }) mapViewEl!: ElementRef;
+  @ViewChild('spinner',{static: true}) spinner!: ElementRef;
   // arcgisViewChange(event: ArcgisMapCustomEvent<any>) {
   //    //console.log("arcGIS event: ", event);
   //     const { center, zoom } = event?.target;
@@ -114,7 +119,8 @@ ngAfterViewInit(): void {
 
     // FeatureLayer - Added
     this.featureLayer = new FeatureLayer({
-      url:this.landscape_trees_featurelayer_url,
+      //url:this.landscape_trees_featurelayer_url,
+      url:this.indianStates,
        outFields: ["TRL_NAME", "CITY_JUR", "X_STREET", "PARKING", "status","Land_Use","Live_Top","Crown_Base","Tree_Site","Tree_Age","Condition","GroundArea","Sci_Name","S_Value","Street","Native","Dedication"],
         popupTemplate: popupTrailheads
     }); 
@@ -293,6 +299,7 @@ console.log("mapPoint",event.mapPoint,event)
   }
 
   async queryLayerView(whereClause: string) {
+    this.isLayerViewQueryWorking=true;
     console.log("whereClause",whereClause)
     const query = new Query();
     query.where = whereClause; // Change condition as needed
@@ -306,6 +313,8 @@ console.log("mapPoint",event.mapPoint,event)
     let pointDataAttrsArr:any[]=[]
   new ParcelLayer({ url:this.landscape_trees_featurelayer_url}).queryFeatures(query)
     .then((response) => {
+      
+      //this.spinner
       this.pointDataAttrs=[];
       this.view.graphics.removeAll();
       // Handle the results
@@ -383,13 +392,17 @@ console.log("mapPoint",event.mapPoint,event)
           //feature.geometry = pointGraphic;
           //return feature;
         });
-
+        
         //this.view.graphics.addMany(response.features);
       //}, 1800);
     })
-    .catch(function(error) {
+    .catch((error) =>{
       console.error("Query failed:", error);
-    });
+      this.isLayerViewQueryWorking=false;
+    })
+    .finally(()=>{
+      this.isLayerViewQueryWorking=false;
+    })
     // this.pointDataAttrs = ;
     // setTimeout(() => {
     //     garr.forEach((f:any)=>this.view.graphics.add(f))

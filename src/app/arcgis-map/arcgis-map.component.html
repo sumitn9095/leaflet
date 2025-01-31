@@ -9,7 +9,12 @@
           </div>
         </div>
       </div>
-      <div class="basis-1/4 h-seevh flex map-controls">
+      <div class="basis-1/4 h-seevh flex map-controls relative">
+        @if(isLayerViewQueryWorking){
+        <div #spinner class="absolute top-0 right-0">
+          <app-spinner></app-spinner>
+        </div>
+        }
         <div class="h-seevh w-full pl-5">
           <div class="rw mb-4">
             <div class="mb-2">
@@ -47,7 +52,6 @@
         <div class="district">
           @for (pn of pointDataAttrs; track pn.FID) {
           <div class="district-data">
-
             <img class="marker absolute top-0 right-4" src="map-marker.svg" alt="Marker Plotted"
               title="Marker Plotted on Map" width="40" />
             <a (click)="goto_location([pn.Longitude,pn.Latitude])" class="goto">Goto Location on Map</a>
