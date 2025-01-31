@@ -18,4 +18,8 @@ export const routes: Routes = [
         path:'arcgis-map',
         loadComponent:()=>import('./arcgis-map/arcgis-map.component').then((m:any) => m.ArcgisMapComponent)
     },
+    {
+        path:'arcgis-map-geojson',
+        loadComponent:()=>import('./arcgis-map-geojson/arcgis-map-geojson.component').then((m:any) => m.ArcgisMapGeojsonComponent)
+    },
 ];
