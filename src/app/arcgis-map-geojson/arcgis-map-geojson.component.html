@@ -32,7 +32,7 @@
              <button mat-flat-button [color]="'warn'" (click)="removeAllCustomPoints()">Remove all plotted
                points</button>
            </div>
-           <div class="rw mb-2">
+           <!-- <div class="rw mb-2">
              <p class="flex justify-between">Query GroundArea Field <span class="range-values flex"><span
                    class="range-start">{{rangeStart.value}}</span>-<span
                    class="range-end">{{rangeEnd.value}}</span></span></p>
@@ -44,40 +44,39 @@
                    (dragEnd)="onFeatureQuery('GroundArea','range',$event)">
                </mat-slider>
              </div>
-           </div>
+           </div> -->
            <div class="rw">
-             <p class="flex justify-between">Query Condition Field</p>
+             <p class="flex justify-between">Query State Field</p>
              <mat-form-field [appearance]="'fill'" [color]="'accent'">
-               <mat-select [placeholder]="'Select'" (selectionChange)="onFeatureQuery('Condition','select',$event)">
-                 @for (c of conditions; track c) {
-                 <mat-option [value]="c">{{c}}</mat-option>
+               <mat-select [placeholder]="'Select'" (selectionChange)="onFeatureQuery('ID_1','select',$event)" multiple>
+                 @for (pn of pointDataAttrs; track pn.ID_1) {
+                 <mat-option [value]="pn.ID_1">{{pn.NAME_1}}</mat-option>
                  }
                </mat-select>
              </mat-form-field>
            </div>
          </div>
        </div>
+       <!-- {{pointDataAttrs.length}}--{{pointDataAttrs_count}} -->
        <div class="basis-full district-wrap mt-5">
-         <div class="district">
-           @for (pn of pointDataAttrs; track pn.FID) {
-           <div class="district-data">
-             <img class="marker absolute top-0 right-4" src="map-marker.svg" alt="Marker Plotted"
-               title="Marker Plotted on Map" width="40" />
-             <a (click)="goto_location([pn.Longitude,pn.Latitude])" class="goto">Goto Location on Map</a>
-
-             <div class="district-pin" title="FID">{{pn.FID}}</div>
-             <div class="district-data-in">
-               <div class='district-data-row'><b>Sci_Name: </b>{{pn.Sci_Name}}</div>
-               <div class='district-data-row'><b>Cmn_Name: </b>{{pn.Cmn_Name}}</div>
-               <div class='district-data-row'><b>Condition: </b>{{pn.Condition}}</div>
-               <div class='district-data-row'><b>Crew: </b>{{pn.Crew}}</div>
-               <div class='district-data-row'><b>Crown_Height: </b>{{pn.Crown_Height}}</div>
-               <div class='district-data-row'><b>GroundArea: </b>{{pn.GroundArea}}</div>
-               <div class='district-data-row'><b>Native: </b>{{pn.Native}}</div>
-               <div class='district-data-row'><b>S_Value: </b>{{pn.S_Value}}</div>
-             </div>
+         @if(pointDataAttrs.length < pointDataAttrs_count){ <div><button mat-flat-button class="btn-sm" color="'accent'"
+             (click)="queryLayerView('1=1')">Back</button></div>}
+       <div class="district">
+         @for (pn of pointDataAttrs; track pn.ID_1) {
+         <div class="district-data">
+           <img class="marker absolute top-0 right-4" src="map-marker.svg" alt="Marker Plotted"
+             title="Marker Plotted on Map" width="40" />
+           <a (click)="goto_location(pn.latlng,'ID_1','type',pn.ID_1)" class="goto">Goto
+             Location on Map</a>
+           <div class="district-pin" title="FID">{{pn.ID_1}}</div>
+           <div class="district-data-in">
+             <div class='district-data-row'><b>ID: </b>{{pn.ID_1}}</div>
+             <div class='district-data-row'><b>State Name: </b>{{pn.NAME_1}}</div>
+             <div class='district-data-row'><b>State Type: </b>{{pn.TYPE_1}}</div>
+             <div class='district-data-row'><b>Other Names: </b>{{pn.VARNAME_1}}</div>
            </div>
-           }
          </div>
+         }
        </div>
+     </div>
      </div>

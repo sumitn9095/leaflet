@@ -97,6 +97,10 @@
       background-color: rgba(0, 0, 255, 0.253);
       min-width: 300px;
 
+      .district-data-row {
+        word-break: break-all;
+      }
+
       .marker {
         transform: translateY(-50%);
       }

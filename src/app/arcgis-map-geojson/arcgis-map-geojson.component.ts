@@ -9,6 +9,7 @@ import "@arcgis/map-components/dist/components/arcgis-zoom";
 import "@arcgis/map-components/dist/components/arcgis-search";
 import "@arcgis/map-components/dist/components/arcgis-expand";
 import "@arcgis/map-components/dist/components/arcgis-legend";
+import Legend from '@arcgis/core/widgets/Legend';
 import { ArcgisMapCustomEvent} from '@arcgis/map-components/dist/types/components';
 import { setAssetPath as setCalciteComponentsAssetPath } from '@esri/calcite-components/dist/components';
 
@@ -54,12 +55,15 @@ export class ArcgisMapGeojsonComponent implements AfterViewInit {
   landscape_trees_featurelayer_url:string ="https://services.arcgis.com/V6ZHFr6zdgNZuVG0/arcgis/rest/services/Landscape_Trees/FeatureServer/0";
   enablePlotPoints:boolean=false;
   pointDataAttrs:any[]=[];
+  pointDataAttrs_count:number=0;
   layerView:any=[];
   rangeVal:number[]=[0,0];
   isLayerViewQueryWorking:boolean=false;
   india_center:number[]=[78.9629,20.5937]
   conditions:string[]=['Poor','Good','Excellent'];
   private indianStates = 'https://raw.githubusercontent.com/Subhash9325/GeoJson-Data-of-Indian-States/refs/heads/master/Indian_States';
+
+  // private indianStates = 'https://raw.githubusercontent.com/srinathkr07/COVID-19-in-India/refs/heads/master/india-polygon.geojson'
   // @ViewChild('calciteNavigationLogo') calciteNavigationLogo!:ElementRef
   // constructor() {
   //   setCalciteComponentsAssetPath("https://js.arcgis.com/calcite-components/2.13.2/assets");
@@ -129,7 +133,7 @@ ngAfterViewInit(): void {
     };
 
     const fillSymbol = new SimpleFillSymbol({
-      color: [255, 0, 0, 0.5], // Red color with 50% opacity
+      color: [241, 99, 52, 0.51],
       outline: {
         color: "black",
         width: 1,
@@ -148,15 +152,31 @@ ngAfterViewInit(): void {
       popupTemplate: popupTemplate
     }); 
 
+    this.isLayerViewQueryWorking=true;
+
     // Add error handling for the GeoJSONLayer
       this.geoJsonLayer.watch("loadStatus", (status) => {
         if (status === "failed") {
           console.error("GeoJSONLayer failed to load:", this.geoJsonLayer.loadError);
         }
       });
-    
 
+      this.geoJsonLayer.watch("loaded", (status) => {
+        console.log("GeoJSONLayer loaded",status,this.geoJsonLayer);
+        this.queryLayerView(`1=1`)
+         // Add the Legend widget
+        const legend = new Legend({
+          view: this.view,
+          layerInfos: [{
+            layer: this.geoJsonLayer,
+            title: 'Indian States'
+          }]
+        });
 
+        // Add the Legend to the bottom-left corner of the view
+        this.view.ui.add(legend, 'bottom-left');
+      })
+  
     this.geoJsonLayer.when().then(res=>{
       this.geoJsonLayer.on(('refresh'),()=>{
         console.log('geoJsonLayer')
@@ -196,10 +216,15 @@ ngAfterViewInit(): void {
     container: this.mapViewEl.nativeElement,
     map: this.map,
     center: this.india_center, // Dynamic Center (Delhi, India)
-    zoom: 4
+    zoom: 0.5
   });
 
     this.view.when(() => {
+      this.view.goTo( 
+          { center: this.india_center },
+          { duration: 20004 }
+        );
+        this.view.zoom = 4;
       this.view.on("click", (event) => {
         console.log("mapPoint-event",event);
         this.handleMapClick(event);
@@ -207,6 +232,9 @@ ngAfterViewInit(): void {
     });
 
   this.map.add(this.geoJsonLayer);
+
+
+ 
 
 //   const polylineGeometry = new Polyline({
 //   paths: [
@@ -354,6 +382,12 @@ console.log("mapPoint",event.mapPoint,event)
     }
   }
 
+
+  // queryFeats=async(qry:any)=>{
+  //   const qry2 = await this.geoJsonLayer.queryFeatures(qry);
+  //   console.log('features:', qry2);
+  // }
+
   async queryLayerView(whereClause: string) {
     this.isLayerViewQueryWorking=true;
     console.log("whereClause",whereClause)
@@ -367,7 +401,8 @@ console.log("mapPoint",event.mapPoint,event)
     // Execute the query
     let garr:any = [];
     let pointDataAttrsArr:any[]=[]
-  new ParcelLayer({ url:this.indianStates}).queryFeatures(query)
+    
+  this.geoJsonLayer.queryFeatures(query)
     .then((response) => {
       
       //this.spinner
@@ -384,31 +419,36 @@ console.log("mapPoint",event.mapPoint,event)
 
 
       // --------- S ------------
-      const symbol = {
-        type: "simple-fill",
-        color: [20, 130, 200, 0.5],
-        outline: {
-          color: "white",
-          width: 0.5
-        }
-      };
+      // let symbol = {
+      //   type: "simple-fill",
+      //   color: [20, 130, 200, 0.5],
+      //   outline: {
+      //     color: "white",
+      //     width: 0.5
+      //   }
+      // };
 
-       const pointFillSymbol = new SimpleFillSymbol({
-             type: "simple-fill",
-              color: [20, 130, 200, 0.5],
-              outline: {
-                color: "white",
-                width: 0.5
-              }
-          });
+      //  let pointFillSymbol = new SimpleFillSymbol({
+      //        type: "simple-fill",
+      //         color: [20, 130, 200, 0.5],
+      //         outline: {
+      //           color: "white",
+      //           width: 0.5
+      //         }
+      //     });
       
       //setTimeout(() => {
-        
-       
-        response.features.map((feature:any) => {
-          this.pointDataAttrs.push(feature.attributes)
-
-          // ------ NOT Working ---------
+        if(response.features.length < this.pointDataAttrs_count) {}
+        else this.pointDataAttrs_count = response.features.length;
+      // this.pointDataAttrs = response.features
+        response.features.map((feature:any,i:number) => {
+          const long = feature.geometry.extent.center.longitude;
+          const lat = feature.geometry.extent.center.latitude;
+          let latlng:any=[long,lat];
+          feature.attributes.latlng=latlng;
+          this.pointDataAttrs.push(feature.attributes);
+          
+          // ------ NOT Working --------- 
           // let point12 = new Point({
           //   x: feature.geometry.longitude,
           //   y: feature.geometry.latitude,
@@ -424,23 +464,17 @@ console.log("mapPoint",event.mapPoint,event)
           // this.view.graphics.add(this.graphic)
 
           // ------ Working --------------
-          const pointGraphic = new Point({
-            x: feature.geometry.longitude,
-            y: feature.geometry.latitude,
+         this.graphic = new Graphic({
+            geometry: feature.geometry,
+            symbol: new SimpleFillSymbol({
+              color: [239, 235, 111, 0.56], // Red color with 50% opacity
+              
+              outline: {
+                color: [255, 0, 0],
+                width: 1
+              }
+            })
           });
-          const pointSymbol = new SimpleMarkerSymbol({
-            color: "transparent",
-            outline: {
-                color: "blue",
-                width: 2
-              },
-            size: `${feature.attributes.GroundArea/94}px`
-          });
-          this.graphic = new Graphic({
-            geometry: pointGraphic,
-            symbol: pointSymbol,
-            //symbol: symbol,
-          })
           this.view.graphics.add(this.graphic)
 
           // --------------------
@@ -489,15 +523,21 @@ onFeatureQuery(field:string,type:string,data:any) {
       this.queryLayerView(`${field} BETWEEN ${this.rangeVal[0]} AND ${this.rangeVal[1]}`)
     }
   } else if(type === 'select') {
-    this.queryLayerView(`${field} = '${data.value}'`)
+    if(data.value.length) this.queryLayerView(`${field} = ${data.value}`)
+    else this.queryLayerView(`1=1`)
+  } else if(type === 'type') {
+    this.queryLayerView(`${field} = ${data}`)
   }
 }
 
-goto_location(longLat:number[]){
+goto_location(longLat:number[],field:string,type:string,data:any){
+  console.log("longLat",longLat)
   this.view.goTo(                           // go to point with a custom animation duration
     { center: longLat },
     { duration: 2000 }
   );
+  this.view.zoom = 6;
+  this.onFeatureQuery(field,type,data);
 }
 
 //   // Attach Event Listener for View Change
