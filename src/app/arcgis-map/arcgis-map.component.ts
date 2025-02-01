@@ -15,7 +15,6 @@ import Map from '@arcgis/core/Map';
 import MapView from '@arcgis/core/views/MapView';
 import FeatureLayer from '@arcgis/core/layers/FeatureLayer';
 import ParcelLayer from '@arcgis/core/layers/FeatureLayer';
-import GeoJSONLayer from '@arcgis/core/layers/GeoJSONLayer';
 import Graphic from '@arcgis/core/Graphic';
 import Point from "@arcgis/core/geometry/Point";
 import Polyline from "@arcgis/core/geometry/Polyline";
@@ -45,7 +44,6 @@ export class ArcgisMapComponent implements AfterViewInit {
   graphic!:Graphic
   pointId:number=0;
   featureLayer!:FeatureLayer;
-  geoJsonLayer!:GeoJSONLayer;
   landscape_trees_featurelayer_url:string ="https://services.arcgis.com/V6ZHFr6zdgNZuVG0/arcgis/rest/services/Landscape_Trees/FeatureServer/0";
   enablePlotPoints:boolean=false;
   pointDataAttrs:any[]=[];
@@ -53,7 +51,7 @@ export class ArcgisMapComponent implements AfterViewInit {
   rangeVal:number[]=[0,0];
   isLayerViewQueryWorking:boolean=false;
   conditions:string[]=['Poor','Good','Excellent'];
-  private indianStates = 'https://raw.githubusercontent.com/Subhash9325/GeoJson-Data-of-Indian-States/refs/heads/master/Indian_States';
+
   // @ViewChild('calciteNavigationLogo') calciteNavigationLogo!:ElementRef
   // constructor() {
   //   setCalciteComponentsAssetPath("https://js.arcgis.com/calcite-components/2.13.2/assets");
@@ -120,11 +118,16 @@ ngAfterViewInit(): void {
     // FeatureLayer - Added
     this.featureLayer = new FeatureLayer({
       //url:this.landscape_trees_featurelayer_url,
-      url:this.indianStates,
+      url:this.landscape_trees_featurelayer_url,
        outFields: ["TRL_NAME", "CITY_JUR", "X_STREET", "PARKING", "status","Land_Use","Live_Top","Crown_Base","Tree_Site","Tree_Age","Condition","GroundArea","Sci_Name","S_Value","Street","Native","Dedication"],
         popupTemplate: popupTrailheads
     }); 
+    this.isLayerViewQueryWorking=true;
     this.map.add(this.featureLayer);
+
+    this.featureLayer.watch("loaded", (status) => {
+        this.queryLayerView(`1=1`,true)
+      })
 
     // Fetch the 'Feature Layer Fields:', to interact with them
     // featureLayer.load().then(() => {
@@ -298,7 +301,7 @@ console.log("mapPoint",event.mapPoint,event)
     }
   }
 
-  async queryLayerView(whereClause: string) {
+  async queryLayerView(whereClause: string, init:boolean) {
     this.isLayerViewQueryWorking=true;
     console.log("whereClause",whereClause)
     const query = new Query();
@@ -327,27 +330,6 @@ console.log("mapPoint",event.mapPoint,event)
       // });
 
 
-      // --------- S ------------
-      const symbol = {
-        type: "simple-fill",
-        color: [20, 130, 200, 0.5],
-        outline: {
-          color: "white",
-          width: 0.5
-        }
-      };
-
-       const pointFillSymbol = new SimpleFillSymbol({
-             type: "simple-fill",
-              color: [20, 130, 200, 0.5],
-              outline: {
-                color: "white",
-                width: 0.5
-              }
-          });
-      
-      //setTimeout(() => {
-        
        
         response.features.map((feature:any) => {
           this.pointDataAttrs.push(feature.attributes)
@@ -367,25 +349,10 @@ console.log("mapPoint",event.mapPoint,event)
           // });
           // this.view.graphics.add(this.graphic)
 
-          // ------ Working --------------
-          const pointGraphic = new Point({
-            x: feature.geometry.longitude,
-            y: feature.geometry.latitude,
-          });
-          const pointSymbol = new SimpleMarkerSymbol({
-            color: "transparent",
-            outline: {
-                color: "blue",
-                width: 2
-              },
-            size: `${feature.attributes.GroundArea/94}px`
-          });
-          this.graphic = new Graphic({
-            geometry: pointGraphic,
-            symbol: pointSymbol,
-            //symbol: symbol,
-          })
-          this.view.graphics.add(this.graphic)
+          if(!init){
+            // ------ Working --------------
+            this.createMarker(feature.geometry.longitude,feature.geometry.latitude,feature.attributes.GroundArea);
+          }
 
           // --------------------
           //feature.symbol = symbol;
@@ -420,6 +387,28 @@ updatePlotPoints(data:any){
   this.enablePlotPoints=data.checked
 }
 
+
+createMarker(long:number,lat:number,GroundArea:number){
+   const pointGraphic = new Point({
+      x: long,
+      y: lat,
+    });
+    const pointSymbol = new SimpleMarkerSymbol({
+      color: "transparent",
+      outline: {
+          color: "blue",
+          width: 2
+        },
+      size: `${GroundArea/94}px`
+    });
+    this.graphic = new Graphic({
+      geometry: pointGraphic,
+      symbol: pointSymbol,
+      //symbol: symbol,
+    })
+    this.view.graphics.add(this.graphic)
+}
+
 removeAllCustomPoints(){
   this.view.graphics.removeAll();
 }
@@ -428,16 +417,18 @@ onFeatureQuery(field:string,type:string,data:any) {
   console.log("onFeatureQuery:",field,type,data);
   if(type === 'range') {
     this.rangeVal[data?.source?.thumbPosition-1]=data?.source?.value;
-    if(this.rangeVal[0]!==undefined || this.rangeVal[1]!==undefined) {
+    if(this.rangeVal[0]!==undefined || this.rangeVal[1]!==undefined || this.rangeVal[1]!==0) {
       //this.queryLayerView(`${field} > ${rangeVal[0]} && ${field} < ${rangeVal[1]}`)
-      this.queryLayerView(`${field} BETWEEN ${this.rangeVal[0]} AND ${this.rangeVal[1]}`)
+      this.queryLayerView(`${field} BETWEEN ${this.rangeVal[0]} AND ${this.rangeVal[1]}`,false)
     }
   } else if(type === 'select') {
-    this.queryLayerView(`${field} = '${data.value}'`)
+    this.queryLayerView(`${field} = '${data.value}'`,false)
   }
 }
 
 goto_location(longLat:number[]){
+  this.view.graphics.removeAll();
+  this.createMarker(longLat[0],longLat[1],1800);
   this.view.goTo(                           // go to point with a custom animation duration
     { center: longLat },
     { duration: 2000 }

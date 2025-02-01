@@ -18,12 +18,16 @@
          </div>
        </div>
        <div class="basis-1/4 h-seevh flex map-controls relative">
+
          @if(isLayerViewQueryWorking){
          <div #spinner class="absolute top-0 right-0">
            <app-spinner></app-spinner>
          </div>
          }
          <div class="h-seevh w-full pl-5">
+           <div class="header">
+             <h4>ArcGIS Geojson</h4> | <span>sumit.uno</span>
+           </div>
            <div class="rw mb-4">
              <div class="mb-2">
                <mat-slide-toggle [color]="'accent'" (change)="updatePlotPoints($event)">Enable Plotting Points

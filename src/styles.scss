@@ -8,7 +8,27 @@
 @import url('https://js.arcgis.com/4.31/@arcgis/core/assets/esri/themes/dark/main.css');
 // @import url('https://js.arcgis.com/4.31/@arcgis/core/assets/esri/themes/light/main.css');
 
+.header {
+  width: 100%;
+  padding: 16px 12px;
+  display: flex;
+  justify-content: center;
+  background-color: #fff8c2;
+  margin-bottom: 20px;
 
+  h4 {
+    font-weight: bold;
+    padding-right: 10px;
+    display: inline-block;
+
+
+  }
+
+  span {
+    display: inline-block;
+    padding-left: 10px;
+  }
+}
 
 .map-container {
   position: absolute;
@@ -114,6 +134,15 @@
         top: 0;
         right: 0;
       }
+    }
+  }
+}
+
+
+.rw {
+  &.rw-range {
+    .rw-val {
+      margin-top: -12px;
     }
   }
 }

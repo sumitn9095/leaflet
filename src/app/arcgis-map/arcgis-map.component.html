@@ -16,6 +16,9 @@
         </div>
         }
         <div class="h-seevh w-full pl-5">
+          <div class="header">
+            <h4>ArcGIS FeatureLayer</h4> | <span>sumit.uno</span>
+          </div>
           <div class="rw mb-4">
             <div class="mb-2">
               <mat-slide-toggle [color]="'accent'" (change)="updatePlotPoints($event)">Enable Plotting Points
@@ -24,15 +27,16 @@
             <button mat-flat-button [color]="'warn'" (click)="removeAllCustomPoints()">Remove all plotted
               points</button>
           </div>
-          <div class="rw mb-2">
+          <div class="rw rw-range mb-2">
             <p class="flex justify-between">Query GroundArea Field <span class="range-values flex"><span
                   class="range-start">{{rangeStart.value}}</span>-<span
                   class="range-end">{{rangeEnd.value}}</span></span></p>
-            <div class="w-full text-center">
-              <mat-slider min="1" max="4000" step="10" [color]="'accent'">
-                <input #rangeStart value="0" matSliderStartThumb
+            <div class="w-full text-center rw-val">
+              <mat-slider [min]="1" [max]="4000" step="10" [color]="'accent'">
+                <input #rangeStart [value]="0" [defaultValue]="0" matSliderStartThumb
                   (dragEnd)="onFeatureQuery('GroundArea','range',$event)">
-                <input #rangeEnd value="4000" matSliderEndThumb (dragEnd)="onFeatureQuery('GroundArea','range',$event)">
+                <input #rangeEnd [value]="4000" [defaultValue]="4000" matSliderEndThumb
+                  (dragEnd)="onFeatureQuery('GroundArea','range',$event)">
               </mat-slider>
             </div>
           </div>
